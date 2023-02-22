@@ -31,6 +31,14 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls")
 });
 
+app.post("/login", (req, res) => {
+  console.log("Login with username", req.body)
+  const cookie1 = req.body.username
+  res.cookie("username", cookie1)
+  res.redirect("/urls")
+});
+
+
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
