@@ -2,7 +2,8 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
-function generateRandomString() {}
+const generateRandomString = () => {
+}
 
 app.set("view engine", "ejs");
 
@@ -19,7 +20,14 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
+  console.log("URL has been deleted")
   delete urlDatabase[req.params.id]
+  res.redirect("/urls")
+});
+
+app.post("/urls/:id", (req, res) => {
+  console.log("URL has been updated")
+  urlDatabase[req.params.id] = req.body.longURL;
   res.redirect("/urls")
 });
 
