@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 const generateRandomString = () => {
+  return Math.random().tostring(36).substring(2,5);
 }
 
 app.set("view engine", "ejs");
