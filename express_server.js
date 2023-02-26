@@ -9,15 +9,13 @@ const generateRandomString = () => {
   return Math.random().tostring(36).substring(2,5);
 }
 
-app.set("view engine", "ejs");
-app.use(cookieParser())
-
-
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+app.set("view engine", "ejs");
+app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }));
 
 //POST REQUESTS
@@ -73,6 +71,11 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  res.render("urls_register", templateVars);
 });
 
 app.get("/", (req, res) => {
