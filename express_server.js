@@ -1,13 +1,13 @@
 const express = require("express");
 const app = express();
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
 const PORT = 8080; // default port 8080
 
 
 const generateRandomString = () => {
   return Math.random().toString(36).substring(2,5);
 }
-
+ 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -26,6 +26,17 @@ const users = {
   },
 };
 
+// helper function to look up user by email
+const getUserByEmail = (email) => {
+  for (const item in users) {
+  if(users[item]["email"] === email) {
+    return email;
+  }
+ }
+ return null;
+};
+
+// MIDDLE WARE
 app.set("view engine", "ejs");
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }));
@@ -50,6 +61,12 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  // const email = req.body.email;
+  // const password = req.body.password;
+  // const user = getUserEmail(email);
+
+
+
   // console.log("Login with username", req.body)
   // const username = req.body.username;
   // res.cookie("username", username);
@@ -69,20 +86,22 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  if(email) {}
-
-
-
-  const user = {
-    id: id,
-    email: email,
-    password: password,
+  if(getUserByEmail(email) || email === "" || password === "") {
+    return res.sendStatus(400);
+  } else {
+    const user = {
+     id: id,
+     email: email,
+     password: password,
   };
   users[id] = user;
   
   res.cookie("user_id", id);
-  // res.clearCookie("username", username);
+
+  console.log(users);
+  
   res.redirect("/urls")
+}
 });
 
 // GET REQUESTS 
@@ -112,6 +131,11 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
+  res.render("urls_register", templateVars);
+});
+
+app.get("/login", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
   res.render("urls_register", templateVars);
 });
