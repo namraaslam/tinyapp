@@ -64,9 +64,6 @@ app.post("/login", (req, res) => {
   // const email = req.body.email;
   // const password = req.body.password;
   // const user = getUserEmail(email);
-
-
-
   // console.log("Login with username", req.body)
   // const username = req.body.username;
   // res.cookie("username", username);
@@ -137,7 +134,7 @@ app.get("/register", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
-  res.render("urls_register", templateVars);
+  res.render("urls_login", templateVars);
 });
 
 app.get("/", (req, res) => {
