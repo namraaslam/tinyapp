@@ -17,31 +17,34 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "123",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "321",
   },
 };
 
 // helper function to look up user by email
 const getUserByEmail = (email) => {
-  for (const item in users) {
-  if(users[item]["email"] === email) {
-    return email;
+  const userValues = Object.values(users);
+
+  for (const user of userValues) {
+  if(user.email === email) {
+    return user;
   }
  }
- return null;
 };
+
+
 
 // MIDDLE WARE
 app.set("view engine", "ejs");
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }));
 
-//POST REQUESTS
+// POST REQUESTS
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
@@ -61,13 +64,29 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  // const email = req.body.email;
-  // const password = req.body.password;
-  // const user = getUserEmail(email);
-  // console.log("Login with username", req.body)
-  // const username = req.body.username;
-  // res.cookie("username", username);
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = getUserByEmail(email);
+
+  if (!user || password !== user.password) {
+    return res.status(403).send("Error: 403 - Email or Password not valid. Please <a href= '/login'>try again.</a");
+  } 
+
+  // for (user in users){
+  //   console.log(users[user].email);
+  //   if(users[user].email === email && users[user].password
+  //     === password) {
+  //       res.cookie("user_id", user.id);
+  //       res.redirect("/urls")
+  //      }
+  //     else {
+  //     return res.status(403).send("Error: 403 - Email or Password not valid. Please <a href= '/login'>try again.</a");
+  //   }
+  //   };
+
+  res.cookie("user_id", user.id);
   res.redirect("/urls")
+
 });
 
 app.post("/logout", (req, res) => {
@@ -82,8 +101,9 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const existingUser = getUserByEmail(email);
 
-  if(getUserByEmail(email) || email === "" || password === "") {
+  if(existingUser || email === "" || password === "") {
     return res.sendStatus(400);
   } else {
     const user = {
@@ -93,10 +113,7 @@ app.post("/register", (req, res) => {
   };
   users[id] = user;
   
-  res.cookie("user_id", id);
-
-  console.log(users);
-  
+  res.cookie("user_id", id);  
   res.redirect("/urls")
 }
 });
@@ -133,7 +150,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
+  const templateVars = {user: users[req.cookies.user_id]};
   res.render("urls_login", templateVars);
 });
 
