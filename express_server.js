@@ -13,7 +13,7 @@ const urlDatabase = {
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "aJ48lW",
-  },
+  }
 };
 
 const users = {
@@ -65,7 +65,7 @@ app.post("/urls", (req, res) => {
   const shortendURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortendURL] = { longURL: longURL, user_id: loggedIn};
-  res.redirect("/urls/:id");
+  res.redirect("/urls/");
 });
 
 
@@ -165,7 +165,7 @@ app.get("/urls", (req, res) => {
     return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
   };
 
-  const templateVars = { urls: urlsForUser(loggedIn), user: users[req.session.user_id] };
+  const templateVars = { urls: urlDatabase, user: users[req.session.user_id] };
   res.render("urls_index", templateVars);
 });
 
@@ -190,6 +190,7 @@ app.get("/urls/:id", (req, res) => {
   if (loggedIn !== usersID) {
     return res.status(400).send("This URL does not belong to your account.");
   };
+
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.session.user_id]};
   res.render("urls_show", templateVars);
 });
