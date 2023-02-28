@@ -1,6 +1,6 @@
+const cookieSession = require('cookie-session')
 const express = require("express");
 const app = express();
-const cookieParser = require('cookie-parser');
 const bcrypt = require("bcryptjs");
 const PORT = 8080; // default port 8080
 
@@ -55,13 +55,20 @@ const urlsForUser = (id) => {
 
 // MIDDLE WARE
 app.set("view engine", "ejs");
-app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieSession({
+  name: 'session',
+  keys: ["hello"],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
 
 // POST REQUESTS
 
 app.post("/urls", (req, res) => {
-  const loggedIn = req.cookies.user_id;
+  const loggedIn = req.session.user_id;
   if (!loggedIn) {
     return res.status(403).send("URL cannot be shortened because you are not logged in. Please <a href= '/login'>try again.</a");
   };
@@ -73,7 +80,7 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   const usersID = urlDatabase[req.params.id].user_id;
-  const loggedIn = req.cookies.user_id;
+  const loggedIn = req.session.user_id;
 
   if (!urlDatabase[req.params.id]) {
     return res.status(400).send("URL does not exist.");
@@ -94,7 +101,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   const usersID = urlDatabase[req.params.id].user_id;
-  const loggedIn = req.cookies.user_id;
+  const loggedIn = req.session.user_id;
 
   if (!urlDatabase[req.params.id]) {
     return res.status(400).send("URL does not exist.");
@@ -125,17 +132,17 @@ app.post("/login", (req, res) => {
   }; 
 
 
-
-
-  res.cookie("user_id", user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls")
 });
 
 app.post("/logout", (req, res) => {
-  const usersShort = users[req.cookies.user_id];
-  res.cookie("user_id", usersShort);
-  res.clearCookie("user_id", usersShort);
-  res.redirect("/urls")
+  // const usersShort = users[req.session.user_id];
+  // res.cookie("user_id", usersShort);
+  // res.clearCookie("user_id", usersShort);
+  // Test - Based on https://github.com/expressjs/cookie-session "destroying a session"?
+  req.session = null
+  res.redirect("/login")
 });
 
 app.post("/register", (req, res) => {
@@ -146,46 +153,47 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   if(existingUser || email === "" || password === "") {
-    return res.sendStatus(400);
-  } else {
-    const user = {
-     id: id,
-     email: email,
-     password: hashedPassword,
+    return res.status(400).send("Invalid email or password.");;
   };
-  users[id] = user;
+
+  const user = {
+    id: id,
+    email: email,
+    password: hashedPassword,
+  };
   
-  res.cookie("user_id", id);  
+  users[id] = user;
+ 
+  res.session.user_id = id;  
   res.redirect("/urls")
-}
 });
 
 
 // GET REQUESTS 
 
 app.get("/urls", (req, res) => {
-  const loggedIn = req.cookies.user_id;
+  const loggedIn = req.session.user_id;
   if (!loggedIn) {
     return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
   };
 
-  const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
+  const templateVars = { urls: urlDatabase, user: users[req.session.user_id] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const loggedIn = req.cookies.user_id;
+  const loggedIn = req.session.user_id;
   if (!loggedIn) {
     res.redirect("/login");
   };
 
-  const templateVars = { user: users[req.cookies.user_id]}; 
+  const templateVars = { user: users[req.session.user_id]}; 
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
   const usersID = urlDatabase[req.params.id].user_id;
-  const loggedIn = req.cookies.user_id;
+  const loggedIn = req.session.user_id;
   if (!loggedIn) {
     return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
   };
@@ -195,7 +203,7 @@ app.get("/urls/:id", (req, res) => {
   };
 
 
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.cookies.user_id]};
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.session.user_id]};
   res.render("urls_show", templateVars);
 });
 
@@ -208,22 +216,22 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const loggedIn = req.cookies.user_id;
+  const loggedIn = req.session.user_id;
   if (loggedIn) {
     res.redirect("/urls");
   };
 
-  const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
+  const templateVars = { urls: urlDatabase, user: users[req.session.user_id] };
   res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const loggedIn = req.cookies.user_id;
+  const loggedIn = req.session.user_id;
   if (loggedIn) {
     res.redirect("/urls");
   };
 
-  const templateVars = {user: users[req.cookies.user_id]};
+  const templateVars = {user: users[req.session.user_id]};
   res.render("urls_login", templateVars);
 });
 
