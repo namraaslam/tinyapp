@@ -1,13 +1,9 @@
 const express = require("express");
 const app = express();
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 const PORT = 8080; // default port 8080
 
-
-const generateRandomString = () => {
-  return Math.random().toString(36).substring(2,5);
-}
- 
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -42,6 +38,10 @@ const getUserByEmail = (email) => {
  }
 };
 
+const generateRandomString = () => {
+  return Math.random().toString(36).substring(2,5);
+}
+ 
 const urlsForUser = (id) => {
   const usersURL = {};
   for (const ids in urlDatabase) {
@@ -117,10 +117,16 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const user = getUserByEmail(email);
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
-  if (!user || password !== user.password) {
+
+  if (!user || ((bcrypt.compareSync(user.password, hashedPassword) === false))) {
     return res.status(403).send("Error: 403 - Email or Password not valid. Please <a href= '/login'>try again.</a");
   }; 
+
+
+
+
   res.cookie("user_id", user.id);
   res.redirect("/urls")
 });
@@ -137,6 +143,7 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const existingUser = getUserByEmail(email);
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   if(existingUser || email === "" || password === "") {
     return res.sendStatus(400);
@@ -144,7 +151,7 @@ app.post("/register", (req, res) => {
     const user = {
      id: id,
      email: email,
-     password: password,
+     password: hashedPassword,
   };
   users[id] = user;
   
