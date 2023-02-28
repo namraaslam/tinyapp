@@ -42,6 +42,16 @@ const getUserByEmail = (email) => {
  }
 };
 
+const urlsForUser = (id) => {
+  const usersURL = {};
+  for (const ids in urlDatabase) {
+    if (urlDatabase[id] === id) {
+      usersURL = urlDatabase[id];
+    }
+  }
+  return usersURL;
+}
+
 
 // MIDDLE WARE
 app.set("view engine", "ejs");
@@ -57,17 +67,47 @@ app.post("/urls", (req, res) => {
   };
   const shortendURL = generateRandomString();
   const longURL = req.body.longURL;
-  urlDatabase[shortendURL] = longURL;
+  urlDatabase[shortendURL] = { longURL: longURL, user_id: loggedIn};
   res.redirect("/urls/:id"); 
 });
 
 app.post("/urls/:id/delete", (req, res) => {
+  const usersID = urlDatabase[req.params.id].user_id;
+  const loggedIn = req.cookies.user_id;
+
+  if (!urlDatabase[req.params.id]) {
+    return res.status(400).send("URL does not exist.");
+  };
+
+  if (!loggedIn) {
+    return res.status(403).send("You are not logged in. Please <a href= '/login'>try again.</a");
+  };
+
+  if (loggedIn !== usersID) {
+    return res.status(400).send("This URL does not belong to your account.");
+  };
+
   console.log("URL has been deleted")
   delete urlDatabase[req.params.id].longURL;
   res.redirect("/urls")
 });
 
 app.post("/urls/:id", (req, res) => {
+  const usersID = urlDatabase[req.params.id].user_id;
+  const loggedIn = req.cookies.user_id;
+
+  if (!urlDatabase[req.params.id]) {
+    return res.status(400).send("URL does not exist.");
+  };
+
+  if (!loggedIn) {
+    return res.status(403).send("You are not logged in. Please <a href= '/login'>try again.</a");
+  };
+
+  if (loggedIn !== usersID) {
+    return res.status(400).send("This URL does not belong to your account.");
+  };
+
   console.log("URL has been updated")
   urlDatabase[req.params.id].longURL = req.body.newURL;
   res.redirect("/urls")
@@ -117,6 +157,11 @@ app.post("/register", (req, res) => {
 // GET REQUESTS 
 
 app.get("/urls", (req, res) => {
+  const loggedIn = req.cookies.user_id;
+  if (!loggedIn) {
+    return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
+  };
+
   const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
   res.render("urls_index", templateVars);
 });
@@ -132,6 +177,17 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+  const usersID = urlDatabase[req.params.id].user_id;
+  const loggedIn = req.cookies.user_id;
+  if (!loggedIn) {
+    return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
+  };
+
+  if (loggedIn !== usersID) {
+    return res.status(400).send("This URL does not belong to your account.");
+  };
+
+
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.cookies.user_id]};
   res.render("urls_show", templateVars);
 });
