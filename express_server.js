@@ -2,6 +2,7 @@ const cookieSession = require('cookie-session')
 const express = require("express");
 const app = express();
 const bcrypt = require("bcryptjs");
+const getUserByEmail = require("./helpers");
 const PORT = 8080; // default port 8080
 
 const urlDatabase = {
@@ -28,16 +29,6 @@ const users = {
   },
 };
 
-// helper function to look up user by email
-const getUserByEmail = (email) => {
-  const userValues = Object.values(users);
-  for (const user of userValues) {
-  if(user.email === email) {
-    return user;
-  }
- }
-};
-
 const generateRandomString = () => {
   return Math.random().toString(36).substring(2,5);
 }
@@ -52,13 +43,12 @@ const urlsForUser = (id) => {
   return usersURL;
 }
 
-
 // MIDDLE WARE
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
-  keys: ["hello"],
+  keys: ["hellowhatsup"],
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -123,7 +113,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   const hashedPassword = bcrypt.hashSync(password, 10);
 
 
@@ -149,7 +139,7 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  const existingUser = getUserByEmail(email);
+  const existingUser = getUserByEmail(email, users);
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   if(existingUser || email === "" || password === "") {
@@ -177,7 +167,7 @@ app.get("/urls", (req, res) => {
     return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
   };
 
-  const templateVars = { urls: urlDatabase, user: users[req.session.user_id] };
+  const templateVars = { urls: urlsForUser(loggedIn), user: users[req.session.user_id] };
   res.render("urls_index", templateVars);
 });
 
