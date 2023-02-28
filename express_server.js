@@ -68,6 +68,7 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls/:id"); 
 });
 
+
 app.post("/urls/:id/delete", (req, res) => {
   const usersID = urlDatabase[req.params.id].user_id;
   const loggedIn = req.session.user_id;
@@ -88,6 +89,7 @@ app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id].longURL;
   res.redirect("/urls")
 });
+
 
 app.post("/urls/:id", (req, res) => {
   const usersID = urlDatabase[req.params.id].user_id;
@@ -110,30 +112,27 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls")
 });
 
+
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const user = getUserByEmail(email, users);
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-
   if (!user || ((bcrypt.compareSync(user.password, hashedPassword) === false))) {
     return res.status(403).send("Error: 403 - Email or Password not valid. Please <a href= '/login'>try again.</a");
   }; 
-
 
   req.session.user_id = user.id;
   res.redirect("/urls")
 });
 
+
 app.post("/logout", (req, res) => {
-  // const usersShort = users[req.session.user_id];
-  // res.cookie("user_id", usersShort);
-  // res.clearCookie("user_id", usersShort);
-  // Test - Based on https://github.com/expressjs/cookie-session "destroying a session"?
   req.session = null
   res.redirect("/login")
 });
+
 
 app.post("/register", (req, res) => {
   const id = generateRandomString();
@@ -171,6 +170,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+
 app.get("/urls/new", (req, res) => {
   const loggedIn = req.session.user_id;
   if (!loggedIn) {
@@ -181,21 +181,20 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+
 app.get("/urls/:id", (req, res) => {
   const usersID = urlDatabase[req.params.id].user_id;
   const loggedIn = req.session.user_id;
   if (!loggedIn) {
     return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
   };
-
   if (loggedIn !== usersID) {
     return res.status(400).send("This URL does not belong to your account.");
   };
-
-
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.session.user_id]};
   res.render("urls_show", templateVars);
 });
+
 
 app.get("/u/:id", (req, res) => {
   if (!urlDatabase[req.params.id]) {
