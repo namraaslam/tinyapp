@@ -61,7 +61,7 @@ app.post("/urls", (req, res) => {
   const loggedIn = req.session.user_id;
   if (!loggedIn) {
     return res.status(403).send("URL cannot be shortened because you are not logged in. Please <a href= '/login'>try again.</a");
-  }
+  };
   const shortendURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortendURL] = { longURL: longURL, user_id: loggedIn};
@@ -75,15 +75,15 @@ app.post("/urls/:id/delete", (req, res) => {
 
   if (!urlDatabase[req.params.id]) {
     return res.status(400).send("URL does not exist.");
-  }
+  };
 
   if (!loggedIn) {
     return res.status(403).send("You are not logged in. Please <a href= '/login'>try again.</a");
-  }
+  };
 
   if (loggedIn !== usersID) {
-    return res.status(400).send("This URL does not belong to your account.");
-  }
+    return res.status(400).send("Sorry, this URL does not belong to your account.");
+  };
 
   console.log("URL has been deleted");
   delete urlDatabase[req.params.id].longURL;
@@ -97,15 +97,15 @@ app.post("/urls/:id", (req, res) => {
 
   if (!urlDatabase[req.params.id]) {
     return res.status(400).send("URL does not exist.");
-  }
+  };
 
   if (!loggedIn) {
     return res.status(403).send("You are not logged in. Please <a href= '/login'>try again.</a");
-  }
+  };
 
   if (loggedIn !== usersID) {
     return res.status(400).send("This URL does not belong to your account.");
-  }
+  };
 
   console.log("URL has been updated");
   urlDatabase[req.params.id].longURL = req.body.newURL;
@@ -121,7 +121,7 @@ app.post("/login", (req, res) => {
 
   if (!user || ((bcrypt.compareSync(user.password, hashedPassword) === false))) {
     return res.status(403).send("Error: 403 - Email or Password not valid. Please <a href= '/login'>try again.</a");
-  }
+  };
 
   req.session.user_id = user.id;
   res.redirect("/urls");
@@ -143,16 +143,15 @@ app.post("/register", (req, res) => {
 
   if (existingUser || email === "" || password === "") {
     return res.status(400).send("Invalid email or password.");
-  }
-
+  };
+  
+  //happy path
   const user = {
     id: id,
     email: email,
     password: hashedPassword,
   };
-  
   users[id] = user;
- 
   res.session.user_id = id;
   res.redirect("/urls");
 });
@@ -164,7 +163,7 @@ app.get("/urls", (req, res) => {
   const loggedIn = req.session.user_id;
   if (!loggedIn) {
     return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
-  }
+  };
 
   const templateVars = { urls: urlsForUser(loggedIn), user: users[req.session.user_id] };
   res.render("urls_index", templateVars);
@@ -175,7 +174,7 @@ app.get("/urls/new", (req, res) => {
   const loggedIn = req.session.user_id;
   if (!loggedIn) {
     res.redirect("/login");
-  }
+  };
 
   const templateVars = { user: users[req.session.user_id]};
   res.render("urls_new", templateVars);
@@ -187,10 +186,10 @@ app.get("/urls/:id", (req, res) => {
   const loggedIn = req.session.user_id;
   if (!loggedIn) {
     return res.status(400).send("To view URLs, please <a href= '/login'>login.</a");
-  }
+  };
   if (loggedIn !== usersID) {
     return res.status(400).send("This URL does not belong to your account.");
-  }
+  };
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.session.user_id]};
   res.render("urls_show", templateVars);
 });
@@ -199,7 +198,7 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   if (!urlDatabase[req.params.id]) {
     return res.status(400).send("URL does not exist.");
-  }
+  };
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
@@ -208,7 +207,7 @@ app.get("/register", (req, res) => {
   const loggedIn = req.session.user_id;
   if (loggedIn) {
     res.redirect("/urls");
-  }
+  };
 
   const templateVars = { urls: urlDatabase, user: users[req.session.user_id] };
   res.render("urls_register", templateVars);
@@ -218,7 +217,7 @@ app.get("/login", (req, res) => {
   const loggedIn = req.session.user_id;
   if (loggedIn) {
     res.redirect("/urls");
-  }
+  };
 
   const templateVars = {user: users[req.session.user_id]};
   res.render("urls_login", templateVars);
